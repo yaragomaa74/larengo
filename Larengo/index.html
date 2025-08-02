@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Larengo - تتبع الصلوات</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+ font-family: 'Inter', sans-serif;
+            background-color: #f0f8ff; /* خلفية زرقاء فاتحة */
+            overflow-x: hidden; /* يمنع التمرير الأفقي بسبب الاحتفالات */
+            display: flex; /* لعرض المحتوى بشكل عمودي */
+            flex-direction: column; /* لعرض المحتوى بشكل عمودي */
+            align-items: center; /* لتوسيط المحتوى أفقياً */
+            justify-content: flex-start; /* لمحاذاة المحتوى للأعلى */
+            min-height: 100vh; /* التأكد من أن الجسم يشغل ارتفاع الشاشة بالكامل */
+            margin: 0; /* إزالة الهامش الافتراضي للجسم */
+            padding: 4px; /* الحفاظ على هامش عام */
+            background-image: url("./images/Gemini_Generated_Image_wxc817wxc817wxc8.png");
+            background-size: cover; /* التأكد من أن الصورة تغطي العنصر بالكامل */
+            background-repeat: no-repeat; /* منع تكرار الصورة */
+            background-position: center center; /* (اختياري) توسيط الصورة */
+            position: relative; /* مطلوب لعنصر pseudo-element ::before */
+            height: 100vh;
+        }
+        /* طبقة تراكب للخلفية */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.222); /* تراكب أسود خفيف جداً */
+            z-index: -1; /* التأكد من أنه خلف المحتوى ولكن فوق صورة الخلفية */
+        }
+        .larengo-title {
+            /* تم التحديث بألوان تدرج هادئة جداً لتأثير "على الأبيض" */
+            background: linear-gradient(90deg, #e6eff7, #dbe9f2, #d0e4ee, #c5dde9); /* تدرج هادئ جديد */
+            -webkit-background-clip: text;
+            background-clip:text;
+            -webkit-text-fill-color: transparent;
+            font-size: 4.5rem; /* زيادة طفيفة في حجم الخط */
+            font-weight: 800; /* الوزن الأصلي للخط */
+            animation: float-subtle 3s infinite ease-in-out; /* تغيير الرسوم المتحركة إلى "طفو" خفيف جديد */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1); /* الظل الأصلي للنص */
+            line-height: 1; /* التأكد من عدم وجود مسافة إضافية أعلى/أسفل */
+            margin-bottom: 2rem; /* تقليل الهامش لتحريك العنوان والعناصر اللاحقة للأعلى */
+        }
+
+        @keyframes float-subtle { /* رسوم متحركة جديدة للعنوان */
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); } /* طفو عمودي خفيف */
+            100% { transform: translateY(0px); }
+        }
+
+        #child-selection-area {
+            /* تم التحديث بألوان تدرج هادئة جداً لتتوافق مع العنوان */
+            background: linear-gradient(90deg, #e6eff7, #dbe9f2, #d0e4ee, #c5dde9); /* تدرج هادئ جديد */
+            border: none; /* إزالة الحدود الصلبة */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); /* ظل أخف قليلاً لمظهر هادئ */
+        }
+        
+        #child-selection-area label {
+            color: #333333; /* نص أغمق لتحسين قابلية القراءة على التدرج الخفيف */
+        }
+
+        #child-selection-area input {
+            background-color: #ffffff; /* التأكد من أن خلفية حقل الإدخال بيضاء */
+            color: #333; /* نص داكن للإدخال */
+        }
+        
+        #child-selection-area input::placeholder {
+            color: #666; /* ضبط لون العنصر النائب للرؤية */
+        }
+
+        #child-selection-area p {
+            color: #333333; /* نص أغمق لرسالة الترحيب */
+        }
+
+        .prayer-box {
+            /* تم التحديث لمظهر أكثر طفولية وحجم أكبر */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            cursor: pointer;
+            border-radius: 1.5rem; /* زوايا أكثر استدارة (ما يعادل rounded-3xl) */
+            border: 2px solid #a8dadc; /* حدود زرقاء ناعمة */
+            box-shadow: 0 4px 10px rgba(0, 150, 199, 0.1); /* ظل أزرق أنعم */
+            padding: 2rem; /* زيادة المسافة البادئة من p-6 إلى p-8 */
+        }
+        .prayer-box:hover {
+            transform: translateY(-8px); /* رفع طفيف عند التمرير */
+            box-shadow: 0 12px 25px rgba(0, 150, 199, 0.25); /* ظل أكثر وضوحاً عند التمرير */
+        }
+        .prayer-box.prayed {
+            background-color: #d4edda; /* أخضر فاتح للصلاة المؤداة */
+            border-color: #28a745;
+        }
+        /* Increased size of emojis inside prayer boxes */
+        .prayer-box .text-6xl {
+            font-size: 8rem; /* Made emojis much larger */
+        }
+
+        /* Container for individual palm tree growth stages */
+        #palm-tree-stages-container {
+            min-height: 180px; /* Adjust as needed for the largest emoji */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative; /* For absolute positioning of stages if needed */
+        }
+
+        .palm-tree-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0; /* Start hidden */
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            position: absolute; /* Stack stages on top of each other */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+        }
+
+        .palm-tree-stage.active {
+            opacity: 1; /* Show active stage */
+            transform: translateY(0) scale(1);
+        }
+        .palm-tree-stage.hidden-stage {
+            opacity: 0;
+            transform: translateY(20px) scale(0.8); /* Fade out and shrink */
+            pointer-events: none; /* Prevent interaction with hidden elements */
+        }
+
+
+        .palm-tree-emoji {
+            font-size: 4rem; /* Increased base size of palm tree emoji */
+            transition: transform 0.3s ease-in-out, color 0.3s ease-in-out, filter 0.3s ease-in-out; /* Smooth transitions */
+            display: inline-block; /* Ensure transform works */
+            animation: subtleFloatPalm 4s infinite ease-in-out; /* Added gentle float animation */
+        }
+        /* Specific scale adjustments for palm tree growth applied dynamically */
+        .palm-tree-emoji[style*="scale"] {
+            transform-origin: bottom center; /* Ensure scaling from the base */
+        }
+
+
+        /* شريط التمرير المخصص للترتيب */
+        .ranking-list::-webkit-scrollbar,
+        .weekly-history-list::-webkit-scrollbar,
+        .recent-prayers-list::-webkit-scrollbar,
+        .achievements-details-list::-webkit-scrollbar, /* Added for achievements modal */
+        .duaa-list::-webkit-scrollbar { /* Added for duaa modal */
+            width: 8px;
+        }
+        .ranking-list::-webkit-scrollbar-track,
+        .weekly-history-list::-webkit-scrollbar-track,
+        .recent-prayers-list::-webkit-scrollbar-track,
+        .achievements-details-list::-webkit-scrollbar-track, /* Added for achievements modal */
+        .duaa-list::-webkit-scrollbar-track { /* Added for duaa modal */
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .ranking-list::-webkit-scrollbar-thumb,
+        .weekly-history-list::-webkit-scrollbar-thumb,
+        .recent-prayers-list::-webkit-scrollbar-thumb,
+        .achievements-details-list::-webkit-scrollbar-thumb, /* Added for achievements modal */
+        .duaa-list::-webkit-scrollbar-thumb { /* Added for duaa modal */
+            background: #888;
+            border-radius: 10px;
+        }
+        .ranking-list::-webkit-scrollbar-thumb:hover,
+        .weekly-history-list::-webkit-scrollbar-thumb:hover,
+        .recent-prayers-list::-webkit-scrollbar-thumb:hover,
+        .achievements-details-list::-webkit-scrollbar-thumb:hover, /* Added for achievements modal */
+        .duaa-list::-webkit-scrollbar-thumb:hover { /* Added for duaa modal */
+            background: #555;
+            border-radius: 10px;
+        }
+
+        /* أنماط الاحتفال */
+        .celebration-particle {
+            position: fixed;
+            font-size: 2rem;
+            opacity: 0;
+            animation: fallAndFade 3s forwards ease-out;
+            pointer-events: none; /* السماح للنقرات بالمرور من خلاله */
+            z-index: 1000;
+        }
+
+        @keyframes fallAndFade {
+            0% {
+                transform: translateY(-50px) rotate(0deg);
+                opacity: 0;
+            }
+            20% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* رسوم متحركة جديدة لرموز الصلاة التعبيرية */
+        @keyframes subtlePulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); } /* نبض أكبر قليلاً */
+            100% { transform: scale(1); }
+        }
+
+        @keyframes subtleFloat {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); } /* طفو رأسي أكثر وضوحاً */
+            100% { transform: translateY(0px); }
+        }
+        /* New animation for the palm tree icon itself */
+        @keyframes subtleFloatPalm {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); } /* More pronounced float for the palm tree */
+            100% { transform: translateY(0px); }
+        }
+
+        .prayer-emoji-animated {
+            display: inline-block; /* ضروري لرسوم التحويل المتحركة */
+            animation: subtleFloat 3s infinite ease-in-out; /* حركة طفيفة مستمرة */
+        }
+
+        .prayer-box:hover .prayer-emoji-animated {
+            animation: subtlePulse 0.6s ease-in-out; /* نبض عند التمرير */
+            animation-iteration-count: 1; /* تشغيل مرة واحدة فقط عند التمرير */
+        }
+
+        /* أنماط مربعات الصلاة المقفلة */
+        .prayer-box.locked {
+            opacity: 0.5; /* تعتيمها */
+            pointer-events: none; /* جعلها غير قابلة للنقر */
+            cursor: not-allowed;
+            filter: grayscale(100%); /* جعلها رمادية للمظهر المقفل */
+        }
+        /* التأكد من اختفاء تأثيرات التمرير للمربعات المقفلة */
+        .prayer-box.locked:hover {
+            transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(0, 150, 199, 0.1);
+        }
+
+        /* حالات شجرة النخيل */
+        /* Note: 'paler' and 'withered' use filters for visual effect on the original emoji. */
+        .palm-tree-emoji.paler {
+            filter: grayscale(50%) brightness(1.2); /* جعلها شاحبة */
+            color: #8c8c8c; /* لون رمادي فاتح للنخلة الشاحبة */
+        }
+        .palm-tree-emoji.withered {
+            filter: sepia(100%) saturate(200%) brightness(80%); /* جعلها تبدو ذابلة/صفراء */
+            opacity: 0.7;
+            color: #b2e8b2; /* لون أخضر فاتح للمظهر الذابل */
+            font-size: 3.5rem; /* Adjusted for withered leaf */
+        }
+        .palm-tree-emoji.fruiting {
+            filter: drop-shadow(0 0 8px rgba(76, 175, 80, 0.6)); /* توهج أخضر */
+            color: #388e3c; /* أخضر غني وحيوي */
+        }
+        .achievement-icon {
+            font-size: 2.5rem; /* حجم الشارات */
+            margin: 0 0.5rem;
+            filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5)); /* ظل ذهبي خفيف */
+            transition: transform 0.2s ease-in-out;
+        }
+        .achievement-icon:hover {
+            transform: scale(1.2);
+        }
+
+        /* Styles for Achievement/Duaa Details Modals */
+        .modal-overlay {
+            transition: opacity 0.3s ease-out; /* Fade in/out for the overlay */
+            opacity: 0;
+        }
+
+        .modal-content-wrapper {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            transform: scale(0.95); /* Start slightly smaller */
+            opacity: 0; /* Start hidden */
+            position: relative; /* To contain absolutely positioned decorative elements */
+            overflow: hidden; /* Ensure decorative elements don't spill outside */
+        }
+
+        .detail-card { /* Renamed from achievement-card to be more generic */
+            background-color: #f8f8f8;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            opacity: 0; /* Initial state for animation */
+            transform: translateY(20px); /* Initial state for animation */
+            animation: fade-in-slide-up 0.5s ease-out forwards; /* Apply base animation */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Added for hover effect */
+            cursor: pointer; /* Indicate clickable/hoverable */
+        }
+        .detail-card:hover { /* New hover effect */
+            transform: scale(1.03); /* Slightly enlarge on hover */
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1); /* More pronounced shadow */
+        }
+
+        .detail-card .icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+        .detail-card .title {
+            font-weight: bold;
+            font-size: 1.25rem;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+        .detail-card .description {
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        /* Keyframes for animations */
+        @keyframes fade-in-slide-up {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes float-element-1 {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(20px, -15px) rotate(10deg); }
+            66% { transform: translate(-10px, 10px) rotate(-5deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        @keyframes float-element-2 {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-15px, 20px) rotate(-10deg); }
+            66% { transform: translate(10px, -10px) rotate(5deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        @keyframes glowing-pulse {
+            0% { filter: drop-shadow(0 0 3px rgba(255, 255, 0, 0.4)); opacity: 0.6;}
+            50% { filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.8)); opacity: 0.9;}
+            100% { filter: drop-shadow(0 0 3px rgba(255, 255, 0, 0.4)); opacity: 0.6;}
+        }
+
+        /* Decorative elements styles */
+        .modal-decorative-element {
+            position: absolute;
+            font-size: 1.5rem; /* Default size for sparkle/bubble */
+            opacity: 0; /* Start hidden, will animate in */
+            filter: blur(1px); /* Subtle blur */
+            pointer-events: none; /* Make them unclickable */
+            z-index: 1; /* Below content */
+            animation-duration: 6s; /* Longer animation duration */
+            animation-iteration-count: infinite;
+            animation-timing-function: ease-in-out;
+            animation-fill-mode: forwards;
+        }
+
+        .modal-sparkle {
+            animation-name: float-element-1, glowing-pulse;
+            color: #FFD700; /* Gold-ish */
+        }
+        .modal-key-icon {
+            animation-name: float-element-2;
+            color: #6C7A89; /* Grey-ish for key */
+        }
+        .modal-bubble {
+            animation-name: float-element-1; /* Use float-element-1 for bubbles */
+            color: #ADD8E6; /* Light blue */
+            filter: blur(2px) opacity(0.7); /* More blur for ethereal look */
+        }
+        .modal-heart {
+            animation-name: float-element-2; /* Use float-element-2 for hearts */
+            color: #F08080; /* Light red */
+            filter: blur(1.5px) opacity(0.8);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-content flex-start min-h-screen p-4">
+
+    <h1 class="larengo-title">Larengo</h1>
+
+    <!-- Display Active Child Name (replaces user-id-display) -->
+    <!-- This section is now hidden as requested -->
+    <div id="active-child-info-display" class="text-xl text-gray-800 mb-6 px-4 py-2 bg-white rounded-lg shadow-md hidden">
+        الطفل النشط: <span id="displayed-child-name" class="font-bold text-green-700"></span>
+    </div>
+
+    <!-- Child Name Input -->
+    <div id="child-selection-area" class="p-6 rounded-2xl shadow-xl mb-8 w-full max-w-md text-center">
+        <label for="childNameInput" class="block text-lg font-bold mb-4">أدخل اسم الطفل:</label>
+        <input type="text" id="childNameInput" class="w-full p-3 border border-gray-300 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4" placeholder="مثال: أحمد">
+        <button id="selectChildBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl transition duration-300 ease-in-out transform hover:scale-105">
+            ابدأ تتبع الصلوات
+        </button>
+        <p id="child-welcome-message" class="font-semibold mt-4 hidden"></p>
+    </div>
+
+    <!-- Daily Start Message Area -->
+    <div id="daily-start-area" class="p-6 rounded-2xl shadow-xl mb-8 w-full max-w-md text-center bg-white hidden">
+        <p id="daily-start-message" class="text-2xl font-bold text-gray-800 mb-6">هل أنت مستعد تروي نخلتك اليوم؟</p>
+        <button id="startDayBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl transition duration-300 ease-in-out transform hover:scale-105">
+            نعم، هيا بنا!
+        </button>
+    </div>
+
+    <div id="main-app-content" class="w-full max-w-6xl bg-white bg-opacity-80 p-8 rounded-2xl shadow-xl flex flex-col md:flex-row gap-8 hidden">
+        <div class="flex-1">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">صلوات اليوم</h2>
+            <div id="prayer-boxes" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+            <!-- New section for supplications and achievements buttons -->
+            <div class="mt-8 text-center flex justify-center flex-wrap gap-4">
+                <button id="show-duaa-btn" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-6 rounded-full transition duration-300 ease-in-out transform hover:scale-105 shadow-md hover:shadow-lg border border-teal-700 text-lg">
+                    أدعية تثبيت الصلاة 💖
+                </button>
+                <button id="show-achievements-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full transition duration-300 ease-in-out shadow-md hover:shadow-lg transform hover:scale-105 border border-blue-700 text-lg">
+                    غرفة الإنجازات السرية 🗝️
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col gap-8">
+            <div class="bg-gray-50 p-8 rounded-2xl shadow-inner text-center">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-4">نخلة الالتزام</h3>
+                <div id="palm-tree-stages-container" class="relative w-full h-48 mb-4">
+                    <!-- Palm tree stages will be dynamically rendered here -->
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-4 mb-4">
+                    <div id="progress-bar" class="bg-green-500 h-4 rounded-full transition-all duration-500 ease-out" style="width: 0%;"></div>
+                </div>
+                <p id="palm-tree-message-display" class="text-lg text-gray-600 mt-2">ابدأ بتسجيل صلواتك!</p>
+                <div class="flex justify-center mt-4 flex-wrap gap-4"> <!-- Added gap-4 here -->
+                    <button id="show-recent-prayers-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-full transition duration-300 ease-in-out shadow-md hover:shadow-lg transform hover:scale-105 border border-purple-700">
+                        عرض الصلوات الأخيرة
+                    </button>
+                    <button id="show-weekly-history-btn" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-6 rounded-full transition duration-300 ease-in-out shadow-md hover:shadow-lg transform hover:scale-105 border border-teal-700">
+                        عرض تاريخ الصلوات الأسبوعي
+                    </button>
+                    <!-- show-achievements-btn was moved from here -->
+                </div>
+            </div>
+
+            <!-- New: Achievements Display Area -->
+            <div class="bg-gray-50 p-8 rounded-2xl shadow-inner text-center">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-4">إنجازات الطفل</h3>
+                <div id="achievements-display" class="flex flex-wrap justify-center items-center gap-4">
+                    <p id="no-achievements-message" class="text-gray-500">لا توجد إنجازات بعد.</p>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-8 rounded-2xl shadow-inner flex-1 flex-col flex">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-4 text-center">تصنيف المصلين اليومي (جميع الأطفال)</h3>
+                <div id="ranking-list" class="flex-1 overflow-y-auto ranking-list">
+                    <p class="text-center text-gray-500">جار التحميل... أو لا توجد أطفال سجلوا صلوات اليوم بعد.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="message-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-2xl shadow-lg max-w-lg w-full text-center">
+            <p id="modal-message" class="text-xl font-semibold text-gray-800 mb-6 text-center"></p>
+            <button id="modal-close-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-5 rounded-xl transition duration-300 ease-in-out">
+                حسناً
+            </button>
+        </div>
+    </div>
+
+    <div id="recent-prayers-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden modal-overlay">
+        <div class="bg-white p-8 rounded-2xl shadow-lg max-w-lg w-full modal-content-wrapper">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">الصلوات الأخيرة للطفل <span id="current-child-name-display" class="text-blue-600"></span></h3>
+            <ul id="recent-prayers-list" class="space-y-3 max-h-80 overflow-y-auto ranking-list">
+                </ul>
+            <div class="mt-8 text-center">
+                <button id="recent-prayers-close-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-5 rounded-xl transition duration-300 ease-in-out">
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly History Modal -->
+    <div id="weekly-history-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden modal-overlay">
+        <div class="bg-white p-8 rounded-2xl shadow-lg max-w-xl w-full modal-content-wrapper">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">تاريخ الصلوات الأسبوعي لـ <span id="weekly-history-child-name" class="text-teal-600"></span></h3>
+            <div id="weekly-history-list" class="space-y-3 max-h-80 overflow-y-auto ranking-list border rounded p-3">
+                <!-- Content will be dynamically generated here -->
+            </div>
+            <div class="mt-8 text-center">
+                <button id="weekly-history-close-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-5 rounded-xl transition duration-300 ease-in-out">
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New: Achievement Details Modal (Secret Room) -->
+    <div id="achievements-details-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden modal-overlay">
+        <div class="bg-white p-8 rounded-2xl shadow-lg max-w-2xl w-full mx-4 modal-content-wrapper">
+            <h3 class="text-3xl font-bold text-gray-800 mb-6 text-center">غرفة الإنجازات السرية 🗝️</h3>
+            <div id="achievements-details-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto pr-2 achievements-details-list">
+                <!-- Achievement cards will be dynamically generated here -->
+            </div>
+            <div class="mt-8 text-center">
+                <button id="achievements-details-close-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-5 rounded-xl transition duration-300 ease-in-out">
+                    إغلاق
+                </button>
+            </div>
+            <!-- Decorative elements for Secret Room -->
+            <span class="modal-decorative-element modal-sparkle" style="top: 10%; left: 5%; animation-delay: 0s;">✨</span>
+            <span class="modal-decorative-element modal-sparkle" style="bottom: 15%; right: 10%; animation-delay: 0.5s;">✨</span>
+            <span class="modal-decorative-element modal-key-icon" style="top: 5%; right: 20%; animation-delay: 1s;">🔑</span>
+            <span class="modal-decorative-element modal-key-icon" style="bottom: 25%; left: 20%; animation-delay: 1.5s;">🗝️</span>
+            <span class="modal-decorative-element modal-sparkle" style="top: 40%; right: 5%; animation-delay: 2s;">✨</span>
+            <span class="modal-decorative-element modal-key-icon" style="bottom: 5%; left: 50%; animation-delay: 2.5s;">🔑</span>
+        </div>
+    </div>
+
+    <!-- New: Duaa Modal -->
+    <div id="duaa-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden modal-overlay">
+        <div class="bg-white p-8 rounded-2xl shadow-lg max-w-2xl w-full mx-4 modal-content-wrapper">
+            <h3 class="text-3xl font-bold text-gray-800 mb-6 text-center">أدعية تثبيت الصلاة 💖</h3>
+            <div id="duaa-list" class="space-y-4 max-h-[70vh] overflow-y-auto pr-2 duaa-list">
+                <!-- Duaa cards will be dynamically generated here -->
+            </div>
+            <div class="mt-8 text-center">
+                <button id="duaa-close-btn" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-5 rounded-xl transition duration-300 ease-in-out">
+                    إغلاق
+                </button>
+            </div>
+            <!-- Decorative elements for Duaa Modal -->
+            <span class="modal-decorative-element modal-bubble" style="top: 10%; left: 80%; animation-delay: 0s;">☁️</span>
+            <span class="modal-decorative-element modal-heart" style="bottom: 5%; right: 70%; animation-delay: 0.7s;">💖</span>
+            <span class="modal-decorative-element modal-bubble" style="top: 30%; left: 15%; animation-delay: 1.2s;">✨</span>
+            <span class="modal-decorative-element modal-heart" style="top: 20%; right: 30%; animation-delay: 1.8s;">💕</span>
+            <span class="modal-decorative-element modal-bubble" style="bottom: 20%; left: 60%; animation-delay: 2.3s;">☁️</span>
+        </div>
+    </div>
+
+    <script type="module">
+        // Global Firebase variables provided by the environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyBBnKEsZxGjQagNbTTeTt7bDZ3RN_oa21c", 
+            authDomain: "larengoapp.firebaseapp.com",
+            projectId: "larengoapp",
+            storageBucket: "larengoapp.firebasestorage.app",
+            messagingSenderId: "654050165355",
+            appId: "1:654050165355:web:5a9ea299608ce14db7e72e",
+            measurementId: "G-5XZJZPYLFL"
+        };
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Import Firebase functions
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, query, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Initialize Firebase services
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Global state variables
+        let currentChildName = null;
+        let userId = null; // Stores authenticated user ID
+        let isAuthReady = false; // Flag indicating authentication completion
+        let unsubscribeChildData = null; // To unsubscribe from real-time child data listener
+        let unsubscribeRanking = null; // To unsubscribe from real-time ranking listener
+
+        // Reference to the public ranking collection (corrected path for odd segments)
+        const publicDailyPrayersRankingRef = collection(db, `artifacts/${appId}/public/data/dailyPrayersRanking`);
+
+        let audioContext;
+        let gainNode;
+
+        // Get DOM elements
+        const prayerBoxesContainer = document.getElementById('prayer-boxes');
+        const childNameInput = document.getElementById('childNameInput');
+        const selectChildBtn = document.getElementById('selectChildBtn');
+        const childSelectionArea = document.getElementById('child-selection-area'); 
+        const dailyStartArea = document.getElementById('daily-start-area');
+        const startDayBtn = document.getElementById('startDayBtn');
+        const mainAppContent = document.getElementById('main-app-content');
+        const childWelcomeMessage = document.getElementById('child-welcome-message'); 
+        // Changed palmTreeIcon and palmTreeMessage to palmTreeStagesContainer and palmTreeMessageDisplay
+        const palmTreeStagesContainer = document.getElementById('palm-tree-stages-container'); // NEW
+        const palmTreeMessageDisplay = document.getElementById('palm-tree-message-display'); // NEW
+        const progressBar = document.getElementById('progress-bar'); // NEW
+
+        const rankingList = document.getElementById('ranking-list');
+        const messageModal = document.getElementById('message-modal');
+        const modalMessage = document.getElementById('modal-message');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const showRecentPrayersBtn = document.getElementById('show-recent-prayers-btn');
+        const recentPrayersModal = document.getElementById('recent-prayers-modal');
+        const recentPrayersList = document.getElementById('recent-prayers-list');
+        const recentPrayersCloseBtn = document.getElementById('recent-prayers-close-btn');
+        const currentChildNameDisplay = document.getElementById('current-child-name-display');
+
+        const activeChildInfoDisplay = document.getElementById('active-child-info-display'); 
+        const displayedChildName = document.getElementById('displayed-child-name'); 
+
+        // New DOM elements for weekly history and achievements
+        const showWeeklyHistoryBtn = document.getElementById('show-weekly-history-btn');
+        const weeklyHistoryModal = document.getElementById('weekly-history-modal');
+        const weeklyHistoryList = document.getElementById('weekly-history-list');
+        const weeklyHistoryCloseBtn = document.getElementById('weekly-history-close-btn');
+        const weeklyHistoryChildNameDisplay = document.getElementById('weekly-history-child-name');
+        const achievementsDisplay = document.getElementById('achievements-display');
+        const noAchievementsMessage = document.getElementById('no-achievements-message');
+
+        // New DOM elements for Achievement Details Modal (Secret Room)
+        const showAchievementsBtn = document.getElementById('show-achievements-btn');
+        const achievementsDetailsModal = document.getElementById('achievements-details-modal'); 
+        const achievementsDetailsList = document.getElementById('achievements-details-list');
+        const achievementsDetailsCloseBtn = document.getElementById('achievements-details-close-btn');
+
+        // New DOM elements for Duaa Modal
+        const showDuaaBtn = document.getElementById('show-duaa-btn');
+        const duaaModal = document.getElementById('duaa-modal');
+        const duaaList = document.getElementById('duaa-list');
+        const duaaCloseBtn = document.getElementById('duaa-close-btn');
+
+
+        // Constants for prayer times and their associated growth stages
+        const prayers = [
+            { name: "الفجر", id: "fajr", color: "bg-blue-200", emoji: "🌅", hour: 3, minute: 10 },
+            { name: "الشروق", id: "shurooq", color: "bg-pink-200", emoji: "🌄", hour: 4, minute: 56 },
+            { name: "الظهر", id: "dhuhr", color: "bg-yellow-200", emoji: "☀️", hour: 11, minute: 58 },
+            { name: "العصر", id: "asr", color: "bg-orange-200", emoji: "🌥️", hour: 15, minute: 33 },
+            { name: "المغرب", id: "maghrib", color: "bg-purple-220", emoji: "🌇", hour: 19, minute: 0 },
+            { name: "العشاء", id: "isha", color: "bg-indigo-200", emoji: "🌙", hour: 20, minute: 34 } // Changed emoji from 🌃 to 🌙
+        ];
+
+        // NEW: Define palm tree growth stages
+        const growthStages = [
+            { count: 0, emoji: "🌱", message: "بذرة تنتظر أن تُسقى!", scale: 0.8 }, // Before Fajr
+            { count: 1, emoji: "🌿", message: "نبتة صغيرة بدأت تنمو بعد صلاة الفجر!", scale: 1.0 }, // After Fajr
+            { count: 2, emoji: "🌾", message: "الساق ينمو، النخلة تكبر بعد الشروق!", scale: 1.2 }, // After Shurooq
+            { count: 3, emoji: "🌳", message: "أوراق خضراء، شجرة قوية بعد الظهر!", scale: 1.4 }, // After Dhuhr
+            { count: 4, emoji: "🌲", message: "نخلة شامخة، تقترب من الإثمار بعد العصر!", scale: 1.6 }, // After Asr
+            { count: 5, emoji: "🌴", message: "نخلة ناضجة! مستعدة للعطاء بعد المغرب.", scale: 1.8 }, // After Maghrib
+            { count: 6, emoji: "🟤🌴", message: "نخلة مثمرة بالتمور! بارك الله فيك بعد العشاء.", scale: 2.0 } // After Isha (all 6 prayers)
+        ];
+
+        // Function to show a custom message in a popup (for general alerts)
+        function showModal(message) {
+            if (modalMessage && messageModal) { 
+                modalMessage.textContent = message;
+                modalMessage.style.textAlign = 'center';
+                messageModal.classList.remove('hidden');
+            } else {
+                console.error("عناصر النافذة المنبثقة غير موجودة، الرجوع إلى التنبيه:", message);
+                // alert(message); // Using alert is not allowed
+            }
+        }
+
+        // Initialize AudioContext for sound effects
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                gainNode = audioContext.createGain();
+                gainNode.connect(audioContext.destination);
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime); // Start with 0 volume
+                console.log("تم تهيئة AudioContext.");
+            } catch (e) {
+                console.error("واجهة برمجة تطبيقات الويب للصوت غير مدعومة في هذا المتصفح:", e);
+            }
+        }
+
+        // Play a simple click sound
+        function playClickSound() {
+            if (!audioContext || audioContext.state === 'suspended') {
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume().then(() => {
+                        console.log("تم استئناف AudioContext بنجاح.");
+                        createAndPlayTone();
+                    }).catch(e => console.error("خطأ في استئناف AudioContext:", e));
+                } else {
+                    console.warn("لم يتم تهيئة AudioContext أو تم تعليقه. لا يمكن تشغيل الصوت.");
+                }
+                return;
+            }
+            createAndPlayTone();
+        }
+
+        function createAndPlayTone() {
+            const oscillator = audioContext.createOscillator();
+            oscillator.type = 'sine'; // Simple sine wave
+            oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // A4 tone
+
+            const now = audioContext.currentTime;
+            gainNode.gain.cancelScheduledValues(now);
+            gainNode.gain.setValueAtTime(0.01, now); // Start with very low volume
+            gainNode.gain.linearRampToValueAtTime(0.05, now + 0.01); // Fast attack
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.1); // Fast decay
+
+            oscillator.connect(gainNode);
+            oscillator.start(now);
+            oscillator.stop(now + 0.1); // Play for 0.1 seconds
+        }
+
+        // Modal close event handlers (for static message modal)
+        modalCloseBtn.addEventListener('click', () => {
+            messageModal.classList.add('hidden');
+        });
+        
+        // Generic function to open animated modals
+        function openAnimatedModal(modalElement) {
+            const contentWrapper = modalElement.querySelector('.modal-content-wrapper');
+            
+            modalElement.classList.remove('hidden'); // Make the overlay visible
+            // Force reflow to ensure initial state is applied before transition
+            void modalElement.offsetWidth; 
+            modalElement.style.opacity = '1';
+
+            // Apply transformed state after a small delay to trigger transition
+            setTimeout(() => {
+                contentWrapper.style.transform = 'scale(1)';
+                contentWrapper.style.opacity = '1';
+                // Trigger animation for decorative elements
+                const decorativeElements = modalElement.querySelectorAll('.modal-decorative-element');
+                decorativeElements.forEach(el => {
+                    el.style.animationPlayState = 'running';
+                    el.style.opacity = '0.6'; // Fade in decorative elements
+                });
+            }, 50); // Small delay
+        }
+
+        // Generic function to close animated modals
+        function closeAnimatedModal(modalElement) {
+            const contentWrapper = modalElement.querySelector('.modal-content-wrapper');
+
+            modalElement.style.opacity = '0'; // Start fading out the overlay
+            contentWrapper.style.transform = 'scale(0.95)'; // Scale down content
+            contentWrapper.style.opacity = '0'; // Fade out content
+
+            // Stop animation for decorative elements
+            const decorativeElements = modalElement.querySelectorAll('.modal-decorative-element');
+            decorativeElements.forEach(el => {
+                el.style.animationPlayState = 'paused';
+                el.style.opacity = '0'; // Fade out decorative elements
+            });
+
+            modalElement.addEventListener('transitionend', function handler() {
+                modalElement.classList.add('hidden'); // Hide completely after transition
+                modalElement.removeEventListener('transitionend', handler);
+            }, { once: true });
+        }
+
+        // Event listeners for closing all animated modals
+        recentPrayersCloseBtn.addEventListener('click', () => {
+            closeAnimatedModal(recentPrayersModal);
+        });
+
+        weeklyHistoryCloseBtn.addEventListener('click', () => {
+            closeAnimatedModal(weeklyHistoryModal);
+        });
+
+        achievementsDetailsCloseBtn.addEventListener('click', () => {
+            closeAnimatedModal(achievementsDetailsModal);
+        });
+        
+        duaaCloseBtn.addEventListener('click', () => {
+            closeAnimatedModal(duaaModal);
+        });
+
+        // Function to get today's date in 'YYYY-MM-DD' format based on local time
+        function getLocalDateString(date = new Date()) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Check if prayer was performed today
+        function checkIfPrayedToday(prayerRecord) {
+            if (!prayerRecord || !prayerRecord.timestamp) return false;
+            try {
+                const prayerDateLocalString = getLocalDateString(new Date(prayerRecord.timestamp));
+                const todayLocalString = getLocalDateString();
+                return prayerDateLocalString === todayLocalString;
+            }
+            catch (e) {
+                console.error("خطأ في التحقق من صلاة اليوم، طابع زمني غير صالح:", prayerRecord, e);
+                return false;
+            }
+        }
+
+        // Check if all prayers are completed today for the current child
+        function checkAllPrayersCompletedToday(lastPrayedMap) {
+            return prayers.every(prayer => checkIfPrayedToday(lastPrayedMap[prayer.id]));
+        }
+
+        // Trigger celebration animation
+        function triggerCelebration() {
+            console.log("تشغيل الاحتفال!");
+            const celebrationContainer = document.createElement('div');
+            celebrationContainer.style.position = 'fixed';
+            celebrationContainer.style.top = '0';
+            celebrationContainer.style.left = '0';
+            celebrationContainer.style.width = '100%';
+            celebrationContainer.style.height = '100%';
+            celebrationContainer.style.overflow = 'hidden';
+            celebrationContainer.style.pointerEvents = 'none';
+            celebrationContainer.style.zIndex = '1000';
+
+            const particles = ['🎉', '✨', '🎊', '🥳', '🌟', '🏆', '💯', '🤩'];
+            const numberOfParticles = 50;
+
+            for (let i = 0; i < numberOfParticles; i++) {
+                const particle = document.createElement('span');
+                particle.className = 'celebration-particle';
+                particle.textContent = particles[Math.floor(Math.random() * particles.length)];
+                particle.style.left = `${Math.random() * 100}vw`;
+                particle.style.animationDelay = `${Math.random() * 2}s`;
+                particle.style.animationDuration = `${2 + Math.random() * 2}s`;
+                celebrationContainer.appendChild(particle);
+            }
+
+            document.body.appendChild(celebrationContainer);
+
+            setTimeout(() => {
+                console.log("إزالة جسيمات الاحتفال.");
+                celebrationContainer.remove();
+            }, 5000);
+        }
+
+        // Update visual state of palm tree and message based on growth stages
+        function updatePalmTree(childData) {
+            console.log("تحديث شجرة النخيل بناءً على بيانات الطفل:", childData);
+            let prayersCompletedTodayCount = 0;
+            let onTimePrayersCount = 0;
+            let latePrayersCount = 0;
+            const now = new Date();
+            const endOfDay = new Date(now);
+            endOfDay.setHours(22, 0, 0, 0); // نهاية اليوم 10 مساءً للمقارنة
+
+            if (childData && childData.lastPrayed) {
+                prayers.forEach(prayer => {
+                    const prayerRecord = childData.lastPrayed[prayer.id];
+                    if (checkIfPrayedToday(prayerRecord)) {
+                        prayersCompletedTodayCount++;
+                        if (prayerRecord.status === 'onTime') {
+                            onTimePrayersCount++;
+                        } else {
+                            latePrayersCount++;
+                        }
+                    }
+                });
+            }
+
+            // Determine the current growth stage based on prayersCompletedTodayCount
+            let currentStageIndex = 0;
+            for (let i = growthStages.length - 1; i >= 0; i--) {
+                if (prayersCompletedTodayCount >= growthStages[i].count) {
+                    currentStageIndex = i;
+                    break;
+                }
+            }
+            const currentGrowthStage = growthStages[currentStageIndex];
+
+            // Clear previous stages and render the current one
+            palmTreeStagesContainer.innerHTML = '';
+            const stageElement = document.createElement('div');
+            stageElement.className = 'palm-tree-stage active';
+            stageElement.innerHTML = `
+                <span class="palm-tree-emoji" style="transform: scale(${currentGrowthStage.scale})">${currentGrowthStage.emoji}</span>
+                <p class="text-lg text-gray-600 mt-2">${currentGrowthStage.message}</p>
+            `;
+            palmTreeStagesContainer.appendChild(stageElement);
+
+            // Update the message display below the stages
+            palmTreeMessageDisplay.textContent = currentGrowthStage.message;
+
+
+            const allPrayersDone = (prayersCompletedTodayCount === prayers.length);
+            const isEndOfDayPassedAndNotAllPrayersDone = (now.getTime() > endOfDay.getTime()) && !allPrayersDone;
+
+            const activeEmojiElement = stageElement.querySelector('.palm-tree-emoji');
+
+            // Apply specific visual states based on conditions to the active emoji
+            activeEmojiElement.classList.remove('paler', 'withered', 'fruiting'); // Reset first
+
+            if (isEndOfDayPassedAndNotAllPrayersDone) {
+                palmTreeMessageDisplay.textContent = 'تأخر الوقت! نخلتك تحتاج لبعض العناية بسبب الصلوات الفائتة. 🍂';
+                activeEmojiElement.classList.add('withered');
+                activeEmojiElement.textContent = '🍂'; // Change to withered leaf emoji
+                activeEmojiElement.style.fontSize = '3.5rem'; // Adjusted for withered leaf
+            } else if (allPrayersDone && latePrayersCount === 0) {
+                palmTreeMessageDisplay.textContent = 'جميع الصلوات تمت على وقتها! نخلتك مزهرة بالثمار! 🥭';
+                activeEmojiElement.classList.add('fruiting');
+                activeEmojiElement.style.color = '#388e3c'; // Rich green for fruiting
+                activeEmojiElement.textContent = '🟤🌴'; // Palm tree with dates
+            } else if (latePrayersCount > 0) {
+                palmTreeMessageDisplay.textContent = 'نخلتك نمت، لكن بعض الصلوات كانت متأخرة قليلاً. 🙁';
+                activeEmojiElement.classList.add('paler');
+                activeEmojiElement.style.color = '#8c8c8c'; // Light greyish for paler
+                // Keep the current growth stage emoji, it's already set from currentGrowthStage.emoji
+            }
+
+            // Update the progress bar
+            const progress = (prayersCompletedTodayCount / prayers.length) * 100;
+            progressBar.style.width = `${progress}%`;
+
+            updateAchievementsDisplay(childData);
+        }
+
+        // *** Firebase Functions ***
+
+        // Function to fetch child data from Firestore (current user's private collection)
+        async function getChildDataFromFirestore(childName) {
+            if (!userId) {
+                console.error("المستخدم غير مصادق عليه. لا يمكن جلب بيانات الطفل.");
+                return null;
+            }
+            if (!childName) {
+                console.error("اسم الطفل مطلوب لجلب البيانات من Firestore.");
+                return null;
+            }
+            try {
+                // Path: /artifacts/${appId}/users/${userId}/children/{childName}
+                const docRef = doc(db, `artifacts/${appId}/users/${userId}/children`, childName);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    console.log("تم جلب بيانات الطفل:", docSnap.data());
+                    const data = docSnap.data();
+                    // Ensure new achievement fields are initialized for existing children
+                    if (!data.achievements) data.achievements = {};
+                    // Initialize firstPrayerBadge correctly, including the 'earned' property
+                    if (typeof data.achievements.firstPrayerBadge === 'undefined' || data.achievements.firstPrayerBadge === null) {
+                        data.achievements.firstPrayerBadge = { earned: false, date: null };
+                    } else if (typeof data.achievements.firstPrayerBadge.earned === 'undefined') {
+                         data.achievements.firstPrayerBadge.earned = false; // Ensure 'earned' property exists
+                    }
+
+
+                    if (!data.achievements.eagleBadges) data.achievements.eagleBadges = { count: 0, lastEarnedDate: null };
+                    if (!data.achievements.luminousMedals) data.achievements.luminousMedals = { count: 0, lastEarnedDate: null };
+                    if (!data.achievements.goldenPalmSeals) data.achievements.goldenPalmSeals = { count: 0, lastEarnedDate: null };
+                    if (!data.dailyStats) data.dailyStats = {};
+                    if (typeof data.dailyStats.consecutiveFullDays === 'undefined') data.dailyStats.consecutiveFullDays = 0;
+                    if (typeof data.dailyStats.lastFullDayRecordedDate === 'undefined') data.dailyStats.lastFullDayRecordedDate = null;
+                    if (typeof data.dailyStats.totalPrayersLoggedOverall === 'undefined') data.dailyStats.totalPrayersLoggedOverall = 0;
+                    // Initialize the new flag for the "all prayers completed" message
+                    if (typeof data.dailyStats.allPrayersCompletedTodayMessageDisplayed === 'undefined') {
+                        data.dailyStats.allPrayersCompletedTodayMessageDisplayed = false;
+                    }
+                    
+                    // Remove old 'streak' if it exists and use 'consecutiveFullDays'
+                    if (typeof data.streak !== 'undefined') {
+                        delete data.streak;
+                    }
+
+                    return data;
+                } else {
+                    console.log("لم يتم العثور على بيانات لهذا الطفل في Firestore:", childName);
+                    // Return initial data if document doesn't exist
+                    return {
+                        lastPrayed: {},
+                        totalPrayers: {},
+                        lastActivityDate: null,
+                        allLoggedPrayers: [],
+                        // New fields for achievements
+                        achievements: {
+                            firstPrayerBadge: { earned: false, date: null }, // NEW: First Prayer Badge
+                            eagleBadges: { count: 0, lastEarnedDate: null },
+                            luminousMedals: { count: 0, lastEarnedDate: null },
+                            goldenPalmSeals: { count: 0, lastEarnedDate: null }
+                        },
+                        dailyStats: {
+                            consecutiveFullDays: 0,
+                            lastFullDayRecordedDate: null,
+                            totalPrayersLoggedOverall: 0, // Keep for general count, but Golden Palm uses consecutiveFullDays
+                            allPrayersCompletedTodayMessageDisplayed: false // New flag for daily message
+                        }
+                    };
+                }
+            } catch (e) {
+                console.error("خطأ في جلب مستند الطفل:", childName, e);
+                showModal("حدث خطأ أثناء جلب بيانات الطفل.");
+                return null;
+            }
+        }
+
+        // Function to save/update child data in Firestore (current user's private collection)
+        async function saveChildDataToFirestore(childName, data) {
+            if (!userId) {
+                console.error("المستخدم غير مصادق عليه. لا يمكن حفظ بيانات الطفل.");
+                return;
+            }
+            if (!childName || !data) {
+                console.error("اسم الطفل والبيانات مطلوبة للحفظ في Firestore.");
+                return;
+            }
+            try {
+                // Path: /artifacts/${appId}/users/${userId}/children/{childName}
+                const docRef = doc(db, `artifacts/${appId}/users/${userId}/children`, childName);
+                await setDoc(docRef, data, { merge: true }); // Use merge: true to update specific fields
+                console.log("تم حفظ بيانات الطفل بنجاح لـ:", childName);
+            } catch (e) {
+                console.error("خطأ في كتابة مستند الطفل:", childName, e);
+                showModal("حدث خطأ أثناء حفظ بيانات الطفل.");
+            }
+        }
+
+        // Function to update public ranking data
+        async function updatePublicRanking(childName, prayersCompletedTodayCount, userIdOfChild) {
+            const todayLocalString = getLocalDateString(); // Use the local date string
+            const publicRankDocRef = doc(publicDailyPrayersRankingRef, childName); // Use child name as the ID for the public document
+            
+            console.log(`[updatePublicRanking] تحديث التصنيف لـ: ${childName}, الصلوات المكتملة اليوم: ${prayersCompletedTodayCount}, تاريخ اليوم المحلي: ${todayLocalString}`);
+
+            try {
+                // Fetch current public ranking document
+                const docSnap = await getDoc(publicRankDocRef);
+                let currentPublicData = docSnap.exists() ? docSnap.data() : { prayersToday: 0, lastUpdatedDate: '', userId: userIdOfChild };
+                console.log("[updatePublicRanking] البيانات العامة الحالية قبل التحديث:", currentPublicData);
+
+
+                // If it's a new day for this child in the public ranking, reset
+                if (currentPublicData.lastUpdatedDate !== todayLocalString) {
+                    console.log(`[updatePublicRanking] يوم جديد لـ ${childName}. إعادة تعيين الصلوات اليومية.`);
+                    currentPublicData.prayersToday = 0;
+                    currentPublicData.lastUpdatedDate = todayLocalString;
+                    currentPublicData.userId = userIdOfChild; // To track which user added this child
+                }
+
+                // Update daily prayer count in public ranking
+                currentPublicData.prayersToday = prayersCompletedTodayCount;
+                currentPublicData.lastUpdatedDate = todayLocalString; // Confirm date update
+
+                await setDoc(publicRankDocRef, currentPublicData);
+                console.log(`[updatePublicRanking] تم تحديث التصنيف العام بنجاح لـ ${childName}. البيانات النهائية:`, currentPublicData);
+            } catch (e) {
+                console.error("[updatePublicRanking] خطأ في تحديث التصنيف العام:", childName, e);
+            }
+        }
+
+
+        // Real-time listener for current child's data
+        function setupChildDataListener(childName) {
+            if (unsubscribeChildData) {
+                unsubscribeChildData(); // Unsubscribe from previous listener if exists
+            }
+            if (!userId || !childName) {
+                console.warn("[setupChildDataListener] لا يمكن إعداد مستمع بيانات الطفل: معرف المستخدم أو اسم الطفل مفقود.");
+                return;
+            }
+            
+            const docRef = doc(db, `artifacts/${appId}/users/${userId}/children`, childName);
+            unsubscribeChildData = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const childData = docSnap.data();
+                    console.log("[setupChildDataListener] تحديث بيانات الطفل في الوقت الفعلي:", childData);
+                    renderPrayerBoxes(childData.lastPrayed);
+                    updatePalmTree(childData); // This now also calls updateAchievementsDisplay
+                    
+                    // Update public ranking immediately upon child data update
+                    let prayersCompletedTodayCount = 0;
+                    if (childData && childData.lastPrayed) {
+                        prayers.forEach(prayer => {
+                            if (checkIfPrayedToday(childData.lastPrayed[prayer.id])) {
+                                prayersCompletedTodayCount++;
+                            }
+                        });
+                    }
+                    console.log(`[setupChildDataListener] عدد الصلوات المكتملة اليوم لـ ${childName}: ${prayersCompletedTodayCount}`);
+                    updatePublicRanking(childName, prayersCompletedTodayCount, userId); // Pass userId of the child
+                } else {
+                    console.log("[setupChildDataListener] مستند الطفل غير موجود في مستمع الوقت الفعلي لـ:", childName);
+                    // If document is deleted, reset UI
+                    renderPrayerBoxes({});
+                    updatePalmTree({});
+                    updateAchievementsDisplay({}); // Clear achievements
+                }
+            }, (error) => {
+                console.error("[setupChildDataListener] خطأ في الاستماع إلى مستند الطفل:", error);
+                showModal("حدث خطأ في تحديث بيانات الطفل في الوقت الفعلي.");
+            });
+            console.log(`[setupChildDataListener] تم إعداد مستمع بيانات الطفل لـ ${childName}.`);
+        }
+
+        // Real-time listener for ranking data (all children across users)
+        function setupRankingListener() {
+            if (unsubscribeRanking) {
+                unsubscribeRanking(); // Unsubscribe from previous listener if exists
+            }
+            if (!isAuthReady) { // Ensure authentication is ready to read from public collection
+                console.warn("[setupRankingListener] المصادقة ليست جاهزة لإعداد مستمع الترتيب.");
+                return;
+            }
+
+            // Listen to the public ranking collection
+            unsubscribeRanking = onSnapshot(publicDailyPrayersRankingRef, (querySnapshot) => {
+                const rankingDataToday = [];
+                const todayLocalString = getLocalDateString(); // Use the local date string
+                console.log(`[setupRankingListener] تاريخ اليوم المحلي لتصفية الترتيب: ${todayLocalString}`);
+                console.log(`[setupRankingListener] عدد المستندات في اللقطة: ${querySnapshot.docs.length}`);
+
+                querySnapshot.forEach((docSnap) => {
+                    const childName = docSnap.id;
+                    const publicChildData = docSnap.data();
+                    console.log(`[setupRankingListener] مراجعة مستند: ${childName}, بيانات:`, publicChildData);
+                    
+                    // Ensure data is for today and has recorded prayers
+                    if (publicChildData.lastUpdatedDate === todayLocalString && publicChildData.prayersToday > 0) {
+                        rankingDataToday.push({ name: childName, totalPrayerCountToday: publicChildData.prayersToday });
+                        console.log(`[setupRankingListener] إضافة ${childName} إلى الترتيب: ${publicChildData.prayersToday} صلاة.`);
+                    } else {
+                        console.log(`[setupRankingListener] استبعاد ${childName} من الترتيب (إما تاريخ غير متطابق أو 0 صلاة).`);
+                    }
+                });
+
+                // Sort by total prayers for today in descending order
+                rankingDataToday.sort((a, b) => b.totalPrayerCountToday - a.totalPrayerCountToday);
+                console.log("[setupRankingListener] الترتيب النهائي لليوم:", rankingDataToday);
+
+                rankingList.innerHTML = ''; // Clear previous ranking
+                if (rankingDataToday.length === 0) {
+                    rankingList.innerHTML = '<p class="text-center text-gray-500">لا توجد أطفال سجلوا صلوات اليوم بعد.</p>';
+                } else {
+                    rankingDataToday.forEach((item, index) => {
+                        const rankingItem = document.createElement('div');
+                        rankingItem.className = `flex justify-between items-center p-5 rounded-lg ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'} shadow-sm mb-2`;
+                        rankingItem.innerHTML = `
+                            <span class="font-semibold text-lg text-gray-700">${index + 1}. ${item.name}</span>
+                            <span class="text-blue-600 font-bold">${item.totalPrayerCountToday} صلاة اليوم</span>
+                        `;
+                        rankingList.appendChild(rankingItem);
+                    });
+                }
+                console.log("[setupRankingListener] تم تحديث عرض الترتيب العام لصلوات اليوم.");
+            }, (error) => {
+                console.error("[setupRankingListener] خطأ في الاستماع إلى مجموعة التصنيف العامة:", error);
+                showModal("حدث خطأ في تحديث التصنيف العام.");
+            });
+            console.log("[setupRankingListener] تم إعداد مستمع الترتيب العام.");
+        }
+
+        // Render prayer boxes
+        function renderPrayerBoxes(lastPrayedTimestamps = {}) {
+            console.log("عرض مربعات الصلوات:", lastPrayedTimestamps);
+            prayerBoxesContainer.innerHTML = ''; // Clear previous boxes
+
+            prayers.forEach((prayer, index) => {
+                const isPrayedToday = checkIfPrayedToday(lastPrayedTimestamps[prayer.id]);
+                let isLocked = false;
+                let clickable = true; // By default, clickable
+
+                if (isPrayedToday) {
+                    isLocked = false;
+                    clickable = false; // Not clickable again today
+                } else {
+                    const prevPrayerId = prayers[index - 1]?.id;
+                    if (index === 0 || (prevPrayerId && checkIfPrayedToday(lastPrayedTimestamps[prevPrayerId]))) {
+                        isLocked = false;
+                        clickable = true;
+                    } else {
+                        isLocked = true;
+                        clickable = false;
+                    }
+                }
+
+                const box = document.createElement('div');
+                box.id = `prayer-box-${prayer.id}`;
+                box.className = `prayer-box ${prayer.color} p-8 rounded-3xl shadow-md text-center transform hover:scale-105 flex flex-col items-center justify-content center ${isPrayedToday ? 'prayed' : ''} ${isLocked ? 'locked' : ''}`;
+
+                box.innerHTML = `
+                    <div class="text-6xl mb-3"><span class="prayer-emoji-animated">${prayer.emoji}</span></div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2">${prayer.name}</h3>
+                    <p class="text-gray-600 text-sm">${isPrayedToday ? 'تمت الصلاة اليوم ✅' : 'لم تُصلَّ بعد ❌'}</p>
+                `;
+
+                if (clickable && !isPrayedToday) {
+                    box.addEventListener('click', () => markPrayerAsPrayed(prayer.id, prayer.name));
+                } else if (isLocked) {
+                    box.style.cursor = 'not-allowed';
+                }
+                prayerBoxesContainer.appendChild(box);
+            });
+        }
+
+        // Function to update achievements display
+        function updateAchievementsDisplay(childData) {
+            achievementsDisplay.innerHTML = ''; // Clear previous badges
+            let hasAchievements = false;
+
+            if (childData && childData.achievements) {
+                const achievements = childData.achievements;
+                
+                // NEW: First Prayer Badge
+                if (achievements.firstPrayerBadge && achievements.firstPrayerBadge.earned) {
+                    const firstPrayerBadge = document.createElement('span');
+                    firstPrayerBadge.className = 'achievement-icon';
+                    firstPrayerBadge.title = `شارة البداية المشرقة (تم الحصول عليها في ${new Date(achievements.firstPrayerBadge.date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric'})})`;
+                    firstPrayerBadge.textContent = '✨';
+                    achievementsDisplay.appendChild(firstPrayerBadge);
+                    hasAchievements = true;
+                }
+
+                if (achievements.eagleBadges && achievements.eagleBadges.count > 0) {
+                    const eagleBadge = document.createElement('span');
+                    eagleBadge.className = 'achievement-icon';
+                    eagleBadge.title = `شارة النسر (تم الحصول عليها ${achievements.eagleBadges.count} مرات)`;
+                    eagleBadge.textContent = '🦅';
+                    achievementsDisplay.appendChild(eagleBadge);
+                    hasAchievements = true;
+                }
+
+                if (achievements.luminousMedals && achievements.luminousMedals.count > 0) {
+                    const luminousMedal = document.createElement('span');
+                    luminousMedal.className = 'achievement-icon';
+                    luminousMedal.title = `وسام المصلّي المضيء (تم الحصول عليه ${achievements.luminousMedals.count} مرات)`;
+                    luminousMedal.textContent = '🌟';
+                    achievementsDisplay.appendChild(luminousMedal);
+                    hasAchievements = true;
+                }
+
+                if (achievements.goldenPalmSeals && achievements.goldenPalmSeals.count > 0) {
+                    const goldenPalmSeal = document.createElement('span');
+                    goldenPalmSeal.className = 'achievement-icon';
+                    goldenPalmSeal.title = `ختم النخلة الذهبية (تم الحصول عليها ${achievements.goldenPalmSeals.count} مرات)`;
+                    goldenPalmSeal.textContent = '🏆';
+                    achievementsDisplay.appendChild(goldenPalmSeal);
+                    hasAchievements = true;
+                }
+            }
+
+            if (!hasAchievements) {
+                noAchievementsMessage.classList.remove('hidden');
+                achievementsDisplay.appendChild(noAchievementsMessage);
+            } else {
+                noAchievementsMessage.classList.add('hidden');
+            }
+        }
+
+        // Mark prayer as "prayed" (modified to use Firebase Firestore)
+        async function markPrayerAsPrayed(prayerId, prayerName) {
+            console.log(`[markPrayerAsPrayed] محاولة تسجيل صلاة ${prayerName} للطفل ${currentChildName}`);
+            if (!currentChildName || !userId) {
+                showModal('الرجاء اختيار اسم الطفل وتسجيل الدخول أولاً.');
+                console.error("[markPrayerAsPrayed] لا يمكن تسجيل الصلاة: اسم الطفل أو معرف المستخدم فارغ.");
+                return;
+            }
+
+            const now = new Date();
+            const todayLocalString = getLocalDateString(now); // Use the local date string
+            
+            let childData = await getChildDataFromFirestore(currentChildName);
+            if (!childData) {
+                // getChildDataFromFirestore already handles error
+                return;
+            }
+
+            const lastPrayedForThisType = childData.lastPrayed[prayerId];
+            const alreadyPrayedToday = checkIfPrayedToday(lastPrayedForThisType);
+
+            if (alreadyPrayedToday) {
+                showModal(`صلاة ${prayerName} تم تسجيلها بالفعل لهذا الطفل اليوم.`);
+                console.warn(`[markPrayerAsPrayed] صلاة ${prayerName} مسجلة بالفعل لهذا اليوم.`);
+                return;
+            }
+
+            let prayerStatus = 'onTime';
+            const prayerDef = prayers.find(p => p.id === prayerId);
+            if (prayerDef) {
+                const scheduledPrayerTime = new Date(now);
+                scheduledPrayerTime.setHours(prayerDef.hour, prayerDef.minute, 0, 0);
+
+                if (now.getTime() > scheduledPrayerTime.getTime()) {
+                    prayerStatus = 'late';
+                }
+            } else {
+                console.error("[markPrayerAsPrayed] تعريف الصلاة غير موجود لـ:", prayerId);
+            }
+            
+            // Update last prayed time and status for this prayer type
+            childData.lastPrayed[prayerId] = {
+                timestamp: now.toISOString(),
+                status: prayerStatus
+            };
+
+            // Update total prayer count for this prayer type
+            if (!childData.totalPrayers[prayerId]) {
+                childData.totalPrayers[prayerId] = { count: 0, lastPrayed: null };
+            }
+            childData.totalPrayers[prayerId].count++;
+            childData.totalPrayers[prayerId].lastPrayed = now.toISOString();
+
+            // Add prayer to full history log
+            childData.allLoggedPrayers.push({
+                prayerId: prayerId,
+                prayerName: prayerName,
+                timestamp: now.toISOString(),
+                status: prayerStatus
+            });
+
+            // Update overall total prayers logged (for general stats, Golden Palm uses consecutive days now)
+            if (!childData.dailyStats) childData.dailyStats = {}; 
+            if (typeof childData.dailyStats.totalPrayersLoggedOverall === 'undefined') {
+                childData.dailyStats.totalPrayersLoggedOverall = 0;
+            }
+            childData.dailyStats.totalPrayersLoggedOverall++;
+
+            // Variable to hold the message to show
+            let messageToDisplay = null;
+            
+            // Calculate prayers completed today for the child
+            let prayersCompletedTodayCount = 0;
+            if (childData && childData.lastPrayed) {
+                prayers.forEach(prayer => {
+                    if (checkIfPrayedToday(childData.lastPrayed[prayer.id])) {
+                        prayersCompletedTodayCount++;
+                    }
+                });
+            }
+            console.log(`[markPrayerAsPrayed] الصلوات المكتملة لـ ${currentChildName} اليوم: ${prayersCompletedTodayCount}`);
+
+
+            // Check if ALL prayers are completed for TODAY AND it's the 'Isha' prayer
+            if (prayersCompletedTodayCount === prayers.length && prayerId === 'isha') {
+                // Trigger celebration and show "All prayers completed" message only once per day
+                if (!childData.dailyStats.allPrayersCompletedTodayMessageDisplayed) {
+                    triggerCelebration(); // <<< Trigger celebration here, specifically on Isha completing the set
+                    const completedMessage = `أحسنت! لقد أكملت جميع صلوات اليوم! بارك الله فيك! 🎉`;
+                    messageToDisplay = messageToDisplay ? `${messageToDisplay}\n${completedMessage}` : completedMessage;
+                    childData.dailyStats.allPrayersCompletedTodayMessageDisplayed = true; // Mark message as displayed
+                }
+
+                // NEW: Check for First Prayer Badge (now only when all prayers are completed, and only once ever)
+                // This will be granted only if it's the very first time completing all prayers.
+                if (!childData.achievements.firstPrayerBadge.earned) {
+                    childData.achievements.firstPrayerBadge.earned = true;
+                    childData.achievements.firstPrayerBadge.date = todayLocalString; // Use local date string
+                    const firstPrayerBadgeMessage = `يا له من إنجاز! تهانينا على شارة البداية المشرقة لإكمال جميع صلوات يومك الأول! ✨`;
+                    messageToDisplay = messageToDisplay ? `${messageToDisplay}\n${firstPrayerBadgeMessage}` : firstPrayerBadgeMessage;
+                }
+                
+                if (!childData.dailyStats) childData.dailyStats = {};
+                if (!childData.achievements) childData.achievements = {};
+
+                // Logic for consecutive full days (streak)
+                const lastRecordedFullDayDate = childData.dailyStats.lastFullDayRecordedDate;
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayLocalString = getLocalDateString(yesterday); // Use local date string for yesterday
+                console.log(`[markPrayerAsPrayed] lastRecordedFullDayDate: ${lastRecordedFullDayDate}, yesterdayLocalString: ${yesterdayLocalString}, todayLocalString: ${todayLocalString}`);
+
+
+                if (lastRecordedFullDayDate !== todayLocalString) { // If all prayers completed today for the first time
+                    // Check if streak was continued from yesterday
+                    if (lastRecordedFullDayDate === yesterdayLocalString) {
+                        childData.dailyStats.consecutiveFullDays = (childData.dailyStats.consecutiveFullDays || 0) + 1;
+                        console.log(`[markPrayerAsPrayed] سلسلة متتالية مستمرة. الأيام المتتالية: ${childData.dailyStats.consecutiveFullDays}`);
+                    } else {
+                        // Streak broken or new streak start (sets to 1 because today is a full day)
+                        childData.dailyStats.consecutiveFullDays = 1;
+                        console.log(`[markPrayerAsPrayed] سلسلة جديدة بدأت أو انقطعت. الأيام المتتالية: ${childData.dailyStats.consecutiveFullDays}`);
+                    }
+                    childData.dailyStats.lastFullDayRecordedDate = todayLocalString; // Mark today as recorded full day
+                }
+                
+                // Award Eagle Badge (every 3 consecutive full days)
+                if (childData.dailyStats.consecutiveFullDays > 0 && childData.dailyStats.consecutiveFullDays % 3 === 0) {
+                    if (!childData.achievements.eagleBadges) childData.achievements.eagleBadges = { count: 0, lastEarnedDate: null };
+                    // Prevent awarding multiple times on the same day if logic is re-triggered
+                    if (childData.achievements.eagleBadges.lastEarnedDate !== todayLocalString) { // Use local date string
+                        childData.achievements.eagleBadges.count++;
+                        childData.achievements.eagleBadges.lastEarnedDate = todayLocalString; // Use local date string
+                        const eagleMessage = `أحسنت! لقد حصلت على شارة النسر لإكمال ${childData.dailyStats.consecutiveFullDays} أيام متتالية! 🦅`;
+                        messageToDisplay = messageToDisplay ? `${messageToDisplay}\n${eagleMessage}` : eagleMessage;
+                        console.log("[markPrayerAsPrayed] تم منح شارة النسر.");
+                    }
+                }
+
+                // Award Luminous Worshipper Medal (every 7 consecutive full days)
+                if (childData.dailyStats.consecutiveFullDays > 0 && childData.dailyStats.consecutiveFullDays % 7 === 0) {
+                    if (!childData.achievements.luminousMedals) childData.achievements.luminousMedals = { count: 0, lastEarnedDate: null };
+                    if (childData.achievements.luminousMedals.lastEarnedDate !== todayLocalString) { // Use local date string
+                        childData.achievements.luminousMedals.count++;
+                        childData.achievements.luminousMedals.lastEarnedDate = todayLocalString; // Use local date string
+                        const luminousMessage = `مبارك! لقد حصلت على وسام المصلّي المضيء لإكمال ${childData.dailyStats.consecutiveFullDays} أيام متتالية! 🌟`;
+                        messageToDisplay = messageToDisplay ? `${messageToDisplay}\n${luminousMessage}` : luminousMessage;
+                        console.log("[markPrayerAsPrayed] تم منح وسام المصلّي المضيء.");
+                    }
+                }
+
+                // NEW LOGIC FOR GOLDEN PALM SEAL: every 30 consecutive full days
+                if (childData.dailyStats.consecutiveFullDays > 0 && childData.dailyStats.consecutiveFullDays % 30 === 0) {
+                    if (!childData.achievements.goldenPalmSeals) childData.achievements.goldenPalmSeals = { count: 0, lastEarnedDate: null };
+                    if (childData.achievements.goldenPalmSeals.lastEarnedDate !== todayLocalString) { // Use local date string
+                        childData.achievements.goldenPalmSeals.count++;
+                        childData.achievements.goldenPalmSeals.lastEarnedDate = todayLocalString; // Use local date string
+                        const goldenPalmMessage = `تهانينا! لقد حصلت على ختم النخلة الذهبية لإكمال ${childData.dailyStats.consecutiveFullDays} أيام متتالية! 🏆`;
+                        messageToDisplay = messageToDisplay ? `${messageToDisplay}\n${goldenPalmMessage}` : goldenPalmMessage;
+                        console.log("[markPrayerAsPrayed] تم منح ختم النخلة الذهبية.");
+                    }
+                }
+            }
+
+
+            // Save updated data to Firestore
+            await saveChildDataToFirestore(currentChildName, childData);
+            
+            // Update public ranking after logging prayer
+            // This call is crucial for the ranking list
+            await updatePublicRanking(currentChildName, prayersCompletedTodayCount, userId);
+
+            // UI updates are handled by the onSnapshot listener for child data (which calls updatePalmTree and updateAchievementsDisplay)
+            playClickSound();
+
+            // Show the determined message
+            if (messageToDisplay) {
+                showModal(messageToDisplay);
+            } else {
+                // Default message if no other specific message was generated (e.g., intermediate prayer)
+                showModal(`أحسنت! تم تسجيل صلاة ${prayerName}.`);
+            }
+        }
+
+        // Display recent prayers for current child
+        showRecentPrayersBtn.addEventListener('click', async () => {
+            if (!currentChildName || !userId) {
+                showModal('الرجاء اختيار اسم الطفل وتسجيل الدخول أولاً لعرض الصلوات الأخيرة.');
+                return;
+            }
+
+            currentChildNameDisplay.textContent = currentChildName;
+            recentPrayersList.innerHTML = '<li class="text-center text-gray-500">جارٍ التحميل...</li>';
+            openAnimatedModal(recentPrayersModal);
+
+            const childData = await getChildDataFromFirestore(currentChildName);
+            if (!childData || !childData.allLoggedPrayers || childData.allLoggedPrayers.length === 0) {
+                recentPrayersList.innerHTML = '<li class="text-center text-gray-500">لا توجد صلوات مسجلة لهذا الطفل بعد.</li>';
+                return;
+            }
+
+            // Sort prayers by timestamp in descending order (most recent first)
+            const sortedPrayers = [...childData.allLoggedPrayers].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+            recentPrayersList.innerHTML = ''; // Clear loading message
+
+            sortedPrayers.forEach((prayer, index) => {
+                const listItem = document.createElement('li');
+                const prayerDate = new Date(prayer.timestamp);
+                const dateString = prayerDate.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+                const timeString = prayerDate.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                const statusText = prayer.status === 'onTime' ? 'في الوقت' : 'متأخرة';
+                const statusColor = prayer.status === 'onTime' ? 'text-green-600' : 'text-red-500';
+
+                // Find the prayer definition to get the scheduled time
+                const prayerDefinition = prayers.find(p => p.id === prayer.prayerId);
+                let scheduledTimeString = '';
+                if (prayerDefinition) {
+                    // Create a dummy date for formatting the scheduled time
+                    const dummyDate = new Date(); // Use any date, we only care about hour/minute
+                    dummyDate.setHours(prayerDefinition.hour, prayerDefinition.minute, 0, 0);
+                    scheduledTimeString = dummyDate.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                }
+
+                listItem.className = "flex justify-between items-center p-3 rounded-lg bg-gray-50 shadow-sm detail-card"; // Added detail-card for animation
+                listItem.style.animationDelay = `${index * 0.05}s`; // Stagger animation
+                listItem.innerHTML = `
+                    <span class="font-semibold text-gray-700">${prayer.prayerName}</span>
+                    <div class="text-sm text-gray-500 text-left">
+                        <p>الوقت الفعلي: ${timeString}</p>
+                        ${scheduledTimeString ? `<p>الوقت المُقرر: ${scheduledTimeString}</p>` : ''}
+                        <p><span class="${statusColor}">(${statusText})</span></p>
+                    </div>
+                `;
+                recentPrayersList.appendChild(listItem);
+            });
+        });
+
+        // New function to display weekly prayer history
+        showWeeklyHistoryBtn.addEventListener('click', async () => {
+            if (!currentChildName || !userId) {
+                showModal('الرجاء اختيار اسم الطفل وتسجيل الدخول أولاً لعرض تاريخ الصلوات الأسبوعي.');
+                return;
+            }
+
+            weeklyHistoryChildNameDisplay.textContent = currentChildName;
+            weeklyHistoryList.innerHTML = '<p class="text-center text-gray-500">جارٍ التحميل...</p>';
+            openAnimatedModal(weeklyHistoryModal);
+
+            const childData = await getChildDataFromFirestore(currentChildName);
+            if (!childData || !childData.allLoggedPrayers || childData.allLoggedPrayers.length === 0) {
+                weeklyHistoryList.innerHTML = '<p class="text-center text-gray-500">لا توجد صلوات مسجلة لهذا الطفل بعد.</li>';
+                return;
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Normalize to start of today
+
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // Go back 6 days to include today (7 days total)
+
+            // Filter and group prayers by date
+            const dailyPrayersStatus = {}; // { 'YYYY-MM-DD': { prayerId: true/false, ... } }
+
+            // Initialize all days in the last 7 with all prayers as not prayed
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(sevenDaysAgo);
+                date.setDate(sevenDaysAgo.getDate() + i);
+                const dateKey = getLocalDateString(date); // Use local date string
+                dailyPrayersStatus[dateKey] = {};
+                prayers.forEach(prayer => {
+                    dailyPrayersStatus[dateKey][prayer.id] = false; // Initialize as not prayed
+                });
+            }
+
+            // Populate with actual prayed data
+            childData.allLoggedPrayers.forEach(prayerRecord => {
+                const prayerDate = new Date(prayerRecord.timestamp);
+                const dateKey = getLocalDateString(prayerDate); // Use local date string for recorded prayer
+                // Only consider prayers that happened on or after sevenDaysAgo
+                if (dailyPrayersStatus[dateKey] && prayerDate.getTime() >= sevenDaysAgo.getTime()) { 
+                     dailyPrayersStatus[dateKey][prayerRecord.prayerId] = true;
+                }
+            });
+
+            weeklyHistoryList.innerHTML = ''; // Clear loading message
+
+            let hasHistoryInLast7Days = false;
+            let cardIndex = 0; // For staggering animation
+            // Generate history for the last 7 days (including today)
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(sevenDaysAgo);
+                date.setDate(sevenDaysAgo.getDate() + i);
+                const dateKey = getLocalDateString(date); // Use local date string
+                
+                const displayDate = date.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                const isCurrentDay = getLocalDateString(date) === getLocalDateString(today); // Compare using local date string
+                
+                const dateHeader = document.createElement('div');
+                dateHeader.className = `font-bold text-lg p-2 rounded-md mb-2 ${isCurrentDay ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700'} detail-card`;
+                dateHeader.style.animationDelay = `${cardIndex++ * 0.05}s`;
+                dateHeader.textContent = isCurrentDay ? `اليوم: ${displayDate}` : displayDate;
+                weeklyHistoryList.appendChild(dateHeader);
+
+                const prayersForDay = dailyPrayersStatus[dateKey] || {};
+                
+                const dayContainer = document.createElement('div');
+                dayContainer.className = 'grid grid-cols-3 sm:grid-cols-6 gap-2 mb-4';
+                let anyPrayerOnThisDay = false;
+
+                prayers.forEach(prayer => {
+                    const prayed = prayersForDay[prayer.id];
+                    const prayerStatusIcon = prayed ? '✅' : '❌';
+                    const prayerStatusColor = prayed ? 'text-green-600' : 'text-red-500';
+
+                    const prayerItem = document.createElement('div');
+                    prayerItem.className = `flex flex-col items-center p-2 rounded-md text-sm ${prayed ? 'bg-green-50' : 'bg-red-50'} border ${prayed ? 'border-green-200' : 'border-red-200'} detail-card`; // Added detail-card for animation
+                    prayerItem.style.animationDelay = `${cardIndex++ * 0.05}s`; // Stagger animation
+                    prayerItem.innerHTML = `
+                        <span class="text-xl">${prayer.emoji}</span>
+                        <span class="font-semibold text-gray-700">${prayer.name}</span>
+                        <span class="${prayerStatusColor} text-xs">${prayerStatusIcon}</span>
+                    `;
+                    dayContainer.appendChild(prayerItem);
+                    if (prayed) anyPrayerOnThisDay = true;
+                });
+                weeklyHistoryList.appendChild(dayContainer);
+                if (anyPrayerOnThisDay) hasHistoryInLast7Days = true;
+            }
+
+            if (!hasHistoryInLast7Days && childData.allLoggedPrayers.length > 0) {
+                 weeklyHistoryList.innerHTML = '<p class="text-center text-gray-500">لا توجد صلوات مسجلة في الأيام السبعة الماضية لهذا الطفل.</p>';
+            } else if (childData.allLoggedPrayers.length === 0) {
+                 weeklyHistoryList.innerHTML = '<p class="text-center text-gray-500">لا توجد صلوات مسجلة لهذا الطفل بعد.</p>';
+            }
+        });
+
+        // Event listener for selecting a child
+        selectChildBtn.addEventListener('click', async () => {
+            const enteredChildName = childNameInput.value.trim();
+            if (!enteredChildName) {
+                showModal('من فضلك أدخل اسم الطفل أولاً.');
+                return;
+            }
+
+            if (!isAuthReady) { // Ensure authentication is ready before proceeding
+                showModal('الرجاء الانتظار حتى يتم تحميل ملفات تعريف الارتباط للمستخدم.');
+                return;
+            }
+
+            currentChildName = enteredChildName;
+            localStorage.setItem('larengoCurrentChild', currentChildName); // Save to LocalStorage for persistence
+            childWelcomeMessage.textContent = `أهلاً بك يا ${currentChildName}!`;
+            childWelcomeMessage.classList.remove('hidden');
+            
+            // Set up real-time listener for the selected child's data
+            setupChildDataListener(currentChildName);
+
+            // Removed display of active child info from header
+            // activeChildInfoDisplay.classList.remove('hidden');
+            // displayedChildName.textContent = currentChildName;
+
+            childSelectionArea.classList.add('hidden');
+            dailyStartArea.classList.remove('hidden');
+            
+            // Initial data load (handled by onSnapshot after listener setup)
+            // No need to call getChildDataFromFirestore here directly for UI updates
+            // as onSnapshot will will trigger the first update.
+        });
+
+        // Event listener for starting the day
+        startDayBtn.addEventListener('click', async () => {
+            if (!currentChildName || !userId) {
+                showModal('الرجاء اختيار اسم الطفل وتسجيل الدخول أولاً.');
+                return;
+            }
+
+            const now = new Date();
+            const todayLocalString = getLocalDateString(now); // Use the local date string
+
+            let childData = await getChildDataFromFirestore(currentChildName);
+            if (!childData) return; // Error handled by getChildDataFromFirestore
+
+            // Initialize dailyStats if it doesn't exist
+            if (!childData.dailyStats) {
+                childData.dailyStats = {
+                    consecutiveFullDays: 0,
+                    lastFullDayRecordedDate: null,
+                    totalPrayersLoggedOverall: 0,
+                    allPrayersCompletedTodayMessageDisplayed: false // Initialize here for new child
+                };
+            }
+
+            if (childData.lastActivityDate !== todayLocalString) { // Compare using local date string
+                // If the day hasn't started for this child, reset prayers
+                // Check if yesterday was a full prayer day to continue the streak
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayLocalString = getLocalDateString(yesterday); // Use local date string
+
+                // If last recorded full day was not yesterday, reset consecutiveFullDays
+                if (childData.dailyStats.lastFullDayRecordedDate !== yesterdayLocalString) { // Compare using local date string
+                    childData.dailyStats.consecutiveFullDays = 0;
+                }
+                
+                // Reset daily prayer status
+                childData.lastActivityDate = todayLocalString; // Use local date string
+                childData.lastPrayed = {}; // Reset prayers for the new day
+                childData.dailyStats.allPrayersCompletedTodayMessageDisplayed = false; // Reset for new day
+                
+                // Changed the message here as requested
+                showModal(`أهلاً بك يا ${currentChildName}! ربُك بانتظار أن يسمع دعواتك في الصلاة. 🤲`);
+                console.log("[startDayBtn] بدأ يوم جديد للطفل:", currentChildName);
+
+                // When a new day starts, reset the child's daily prayer count in public ranking
+                await updatePublicRanking(currentChildName, 0, userId); // Send 0 prayers for the new day
+            } else {
+                // If the day has already started
+                showModal(`لقد بدأت يومك بالفعل يا ${currentChildName}!`);
+                console.log("[startDayBtn] اليوم بدأ بالفعل للطفل:", currentChildName);
+            }
+            
+            // Save updated child data (especially dailyStats)
+            await saveChildDataToFirestore(currentChildName, childData);
+
+            dailyStartArea.classList.add('hidden');
+            mainAppContent.classList.remove('hidden');
+            // UI updates (renderPrayerBoxes, updatePalmTree) يتم التعامل معها بواسطة مستمع onSnapshot.
+        });
+
+        // Achievement Definitions for the Secret Room
+        const achievementDefinitions = [
+            {
+                icon: '✨',
+                title: 'شارة البداية المشرقة',
+                description: 'تُمنح هذه الشارة عندما تُكمل جميع صلوات اليوم لأول مرة على الإطلاق. إنها علامة على بداية رائعة في رحلتك مع الصلاة!'
+            },
+            {
+                icon: '🦅',
+                title: 'شارة النسر',
+                description: 'تُمنح عندما تُكمل الصلوات الخمسة (الفجر، الظهر، العصر، المغرب، العشاء) لمدة 3 أيام متتالية. أنت قوي ومثابر كالنسر!'
+            },
+            {
+                icon: '🌟',
+                title: 'وسام المصلّي المضيء',
+                description: 'تُمنح عندما تُكمل الصلوات الخمسة (الفجر، الظهر، العصر، المغرب، العشاء) لمدة 7 أيام متتالية (أسبوع كامل)! أنت نجم ساطع في صلاتك.'
+            },
+            {
+                icon: '🏆',
+                title: 'ختم النخلة الذهبية',
+                description: 'تُمنح عندما تُكمل الصلوات الخمسة (الفجر، الظهر، العصر، المغرب، العشاء) لمدة 30 يومًا متتاليًا (شهر كامل)! هذه الشارة تثبت أنك بطل الصلاة، ونخلتك تثمر ذهباً.'
+            }
+        ];
+
+        // Function to populate and show the Achievements Details Modal
+        showAchievementsBtn.addEventListener('click', () => {
+            achievementsDetailsList.innerHTML = ''; // Clear previous content
+
+            achievementDefinitions.forEach((achievement, index) => {
+                const card = document.createElement('div');
+                card.className = 'detail-card'; // Use generic detail-card class
+                card.style.animationDelay = `${index * 0.1}s`; // Stagger animation
+                card.innerHTML = `
+                    <span class="icon">${achievement.icon}</span>
+                    <h4 class="title">${achievement.title}</h4>
+                    <p class="description">${achievement.description}</p>
+                `;
+                achievementsDetailsList.appendChild(card);
+            });
+
+            openAnimatedModal(achievementsDetailsModal);
+        });
+
+        // Duaa Definitions for the Duaa Modal
+        const duaaDefinitions = [
+            {
+                icon: '💖',
+                title: 'دعاء حب الصلاة',
+                text: 'اللهم اجعل الصلاة قرة عيني، واجعلها أحب إلي من كل شيء. ساعدني يا رب لأحب صلاتي وأستمتع بها!'
+            },
+            {
+                icon: '💡',
+                title: 'دعاء تذكر الصلاة',
+                text: 'يا الله، ذكرني بصلاتي في كل وقت، واجعلني أسمع الأذان بفرح، وأسرع لأداء الصلاة بقلبٍ سعيد.'
+            },
+            {
+                icon: '🌳',
+                title: 'دعاء الثبات على الصلاة',
+                text: 'يا رب، اجعل الصلاة نورًا في قلبي، وقوة في يومي، وسعادة في حياتي. ثبتني على الصلاة واجعلني من عبادك الصالحين.'
+            },
+            {
+                icon: '✨',
+                title: 'دعاء الخشوع في الصلاة',
+                text: 'يا رب، اجعل صلاتي كلها خشوع وطمأنينة، واجعلني أشعر بقربك في كل ركعة وسجدة. تقبل صلاتي يا أكرم الأكرمين.'
+            }
+        ];
+
+        // Function to populate and show the Duaa Modal
+        showDuaaBtn.addEventListener('click', () => {
+            duaaList.innerHTML = ''; // Clear previous content
+
+            duaaDefinitions.forEach((duaa, index) => {
+                const card = document.createElement('div');
+                card.className = 'detail-card'; // Use generic detail-card class
+                card.style.animationDelay = `${index * 0.1}s`; // Stagger animation
+                card.innerHTML = `
+                    <span class="icon">${duaa.icon}</span>
+                    <h4 class="title">${duaa.title}</h4>
+                    <p class="description">${duaa.text}</p>
+                `;
+                duaaList.appendChild(card);
+            });
+
+            openAnimatedModal(duaaModal);
+        });
+
+
+        // Initialize audio on window load
+        window.onload = function () {
+            initAudio();
+        };
+
+        // --- Firebase Authentication and Initial Load ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                isAuthReady = true;
+                console.log("مصادقة Firebase جاهزة. معرف المستخدم:", userId);
+
+                // Set up global real-time listeners only after authentication is ready
+                setupRankingListener(); // This now listens to the public ranking collection
+                
+                // Check for previously selected child and load their data
+                const savedChildName = localStorage.getItem('larengoCurrentChild');
+                if (savedChildName) {
+                    childNameInput.value = savedChildName;
+                    currentChildName = savedChildName;
+                    childWelcomeMessage.textContent = `أهلاً بعودتك يا ${currentChildName}!`;
+                    childWelcomeMessage.classList.remove('hidden');
+
+                    // Set up listener for the pre-selected child
+                    setupChildDataListener(currentChildName);
+
+                    // Removed display of active child info from header as requested
+                    // activeChildInfoDisplay.classList.remove('hidden');
+                    // displayedChildName.textContent = currentChildName;
+
+                    childSelectionArea.classList.add('hidden');
+                    dailyStartArea.classList.remove('hidden'); // Show daily start area
+                }
+                // If no child saved, keep child selection area visible.
+            } else {
+                // User is signed out. Sign in anonymously.
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                        console.log("تم تسجيل الدخول باستخدام توكن مخصص.");
+                    } else {
+                        await signInAnonymously(auth);
+                        console.log("تم تسجيل الدخول بشكل مجهول.");
+                    }
+                } catch (error) {
+                    console.error("خطأ في تسجيل الدخول:", error);
+                    showModal("حدث خطأ في تسجيل الدخول. يرجى المحاولة مرة أخرى.");
+                }
+            }
+        });
+    </script> 
+        <!-- موسيقى البداية -->
+<audio id="introMusic" src="sounds/mixkit-funny-melody-audio-logo-2984_2.mp3"></audio>
+
+<!-- صوت الأجراس -->
+<audio id="cartoonBells" src="sounds/mixkit-kids-cartoon-close-bells-2256.mp3"></audio>
+
+<!-- صوت الترحيب -->
+<audio id="welcomeVoice" src="sounds/welcome to larengo (online-audio-converter.com).mp3"></audio>
+
+<!-- كود الجافاسكريبت -->
+<audio id="backgroundMusic" src="sounds/mixkit-funny-melody-audio-logo-2984_2.mp3" autoplay loop></audio>
+</body>
+</html>
+
