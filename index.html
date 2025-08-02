@@ -27,7 +27,18 @@
             background-position: center center; /* (اختياري) توسيط الصورة */
             position: relative; /* مطلوب لعنصر pseudo-element ::before */
             height: 100vh;
-        }
+        }.background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('./images/Gemini_Generated_Image_wxc817wxc817wxc8.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: -1;
+}
         /* طبقة تراكب للخلفية */
         body::before {
             content: "";
@@ -1828,6 +1839,6 @@
 
 <!-- كود الجافاسكريبت -->
 <audio id="backgroundMusic" src="sounds/mixkit-funny-melody-audio-logo-2984_2.mp3" autoplay loop></audio>
-</body>
+</body><div class="background"></div>
 </html>
 
